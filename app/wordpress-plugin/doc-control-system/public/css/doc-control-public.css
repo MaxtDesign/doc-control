@@ -1,0 +1,188 @@
+/* Upload Form Container */
+.doc-control-upload-form {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.doc-control-upload-form h2 {
+    margin-top: 0;
+    color: #23282d;
+    font-size: 24px;
+    font-weight: 600;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #eee;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #23282d;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-group .description {
+    margin-top: 5px;
+    color: #666;
+    font-size: 13px;
+    font-style: italic;
+}
+
+/* File Input Styling */
+.form-group input[type="file"] {
+    padding: 10px;
+    background: #f8f9fa;
+    border: 2px dashed #ddd;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-group input[type="file"]:hover {
+    border-color: #0073aa;
+}
+
+/* Submit Button */
+.form-group .button-primary {
+    background: #0073aa;
+    border-color: #006291;
+    color: #fff;
+    padding: 8px 16px;
+    height: auto;
+    line-height: 1.4;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+}
+
+.form-group .button-primary:hover {
+    background: #006291;
+    border-color: #005177;
+}
+
+/* Upload Status */
+.upload-status {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0073aa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.status-message {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+}
+
+/* Required Fields */
+.form-group label::after {
+    content: "*";
+    color: #dc3232;
+    margin-left: 4px;
+}
+
+/* Error States */
+.form-group input:invalid,
+.form-group select:invalid,
+.form-group textarea:invalid {
+    border-color: #dc3232;
+}
+
+.form-group .error-message {
+    color: #dc3232;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+/* Success Message */
+.success-message {
+    background: #ecf7ed;
+    border-left: 4px solid #46b450;
+    padding: 12px;
+    margin-bottom: 20px;
+    color: #2e3338;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 782px) {
+    .doc-control-upload-form {
+        padding: 15px;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group select,
+    .form-group textarea {
+        font-size: 16px; /* Prevent zoom on mobile */
+    }
+
+    .form-group .button-primary {
+        width: 100%;
+    }
+}
+
+/* Animations */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Loading State */
+.form-group .button-primary.loading {
+    position: relative;
+    color: transparent;
+}
+
+.form-group .button-primary.loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin: -8px 0 0 -8px;
+    border: 2px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+} 
