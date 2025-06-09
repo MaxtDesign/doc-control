@@ -4,8 +4,8 @@
  * Plugin URI: https://yourcompany.com/doc-control
  * Description: A document control system for managing department procedures and marketing workflows
  * Version: 1.0.0
- * Author: Your Company
- * Author URI: https://yourcompany.com
+ * Author: MaxtDesign
+ * Author URI: https://maxtdesign.com
  * Text Domain: doc-control-system
  * Domain Path: /languages
  */
