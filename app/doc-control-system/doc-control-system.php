@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Document Control System
- * Plugin URI: https://yourcompany.com/doc-control
+ * Plugin URI: https://github.com/MaxtDesign/doc-control
  * Description: A document control system for managing department procedures and marketing workflows
  * Version: 1.0.0
  * Author: MaxtDesign
