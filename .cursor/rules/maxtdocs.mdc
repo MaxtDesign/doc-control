@@ -1,0 +1,400 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# MaxtDocs MVP Technical Specification & Development Plan
+
+## Project Overview
+**Product:** MaxtDocs - Internal Document Control System  
+**Target:** Small businesses with internal servers (10 users)  
+**Timeline:** 8-12 weeks  
+
+## Technical Architecture
+
+### Technology Stack
+- **Frontend:** React 18 + TypeScript + Tailwind CSS
+- **Backend:** Node.js + Express + TypeScript
+- **Database:** PostgreSQL 15
+- **File Storage:** Local filesystem with organized directory structure
+- **Email:** Nodemailer with SMTP
+- **Authentication:** JWT tokens + bcrypt password hashing
+
+### System Architecture
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   React Client  │◄──►│  Express API    │◄──►│  PostgreSQL DB  │
+│   (Port 3000)   │    │  (Port 3001)    │    │  (Port 5432)    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │
+                                ▼
+                       ┌─────────────────┐
+                       │  File System    │
+                       │  /app/storage/  │
+                       └─────────────────┘
+```
+
+## Database Schema
+
+### Users Table
+```sql
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    role VARCHAR(20) NOT NULL CHECK (role IN ('super_admin', 'dept_lead', 'employee', 'doc_controller')),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Departments Table
+```sql
+CREATE TABLE departments (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    folder_path VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### User_Departments Table (Many-to-Many)
+```sql
+CREATE TABLE user_departments (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    department_id INTEGER REFERENCES departments(id) ON DELETE CASCADE,
+    is_lead BOOLEAN DEFAULT false,
+    UNIQUE(user_id, department_id)
+);
+```
+
+### Documents Table
+```sql
+CREATE TABLE documents (
+    id SERIAL PRIMARY KEY,
+    original_name VARCHAR(255) NOT NULL,
+    current_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    file_size BIGINT NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    document_type VARCHAR(20) NOT NULL CHECK (document_type IN ('master', 'working')),
+    department_id INTEGER REFERENCES departments(id),
+    uploaded_by INTEGER REFERENCES users(id),
+    version_number INTEGER DEFAULT 1,
+    parent_document_id INTEGER REFERENCES documents(id),
+    is_checked_out BOOLEAN DEFAULT false,
+    checked_out_by INTEGER REFERENCES users(id),
+    checked_out_at TIMESTAMP,
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'pending_approval', 'archived')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Approval_Requests Table
+```sql
+CREATE TABLE approval_requests (
+    id SERIAL PRIMARY KEY,
+    document_id INTEGER REFERENCES documents(id),
+    submitted_by INTEGER REFERENCES users(id),
+    department_id INTEGER REFERENCES departments(id),
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+    comments TEXT,
+    reviewed_by INTEGER REFERENCES users(id),
+    reviewed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Audit_Log Table
+```sql
+CREATE TABLE audit_log (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    action VARCHAR(50) NOT NULL,
+    table_name VARCHAR(50),
+    record_id INTEGER,
+    old_values JSONB,
+    new_values JSONB,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## File System Structure
+```
+/app/storage/
+├── departments/
+│   ├── marketing/
+│   │   ├── master/
+│   │   └── working/
+│   ├── engineering/
+│   │   ├── master/
+│   │   └── working/
+│   └── hr/
+│       ├── master/
+│       └── working/
+└── temp/
+    └── checkouts/
+```
+
+## API Endpoints
+
+### Authentication
+- `POST /api/auth/login` - User login
+- `POST /api/auth/logout` - User logout
+- `GET /api/auth/me` - Get current user info
+
+### Users
+- `GET /api/users` - List users (admin only)
+- `POST /api/users` - Create user (admin only)
+- `PUT /api/users/:id` - Update user
+- `DELETE /api/users/:id` - Delete user (admin only)
+
+### Departments
+- `GET /api/departments` - List departments
+- `POST /api/departments` - Create department (super admin only)
+- `PUT /api/departments/:id` - Update department (super admin only)
+- `DELETE /api/departments/:id` - Delete department (super admin only)
+
+### Documents
+- `GET /api/documents` - List documents by department
+- `POST /api/documents/upload` - Upload document
+- `GET /api/documents/:id/download` - Download document
+- `POST /api/documents/:id/checkout` - Checkout document for editing
+- `POST /api/documents/:id/checkin` - Check in edited document
+- `GET /api/documents/:id/versions` - Get document version history
+
+### Approvals
+- `GET /api/approvals` - List pending approvals (dept leads only)
+- `POST /api/approvals/:id/approve` - Approve document
+- `POST /api/approvals/:id/reject` - Reject document
+
+## Development Phases
+
+### Phase 1: Foundation (Weeks 1-2)
+**Backend Setup:**
+- Project structure and configuration
+- Database setup and migrations
+- Basic authentication system
+- User management APIs
+
+**Frontend Setup:**
+- React project initialization
+- Basic routing and layout
+- Login/logout functionality
+- User dashboard
+
+### Phase 2: Core Features (Weeks 3-5)
+**Document Management:**
+- File upload/download system
+- Department folder structure
+- Basic document listing and search
+- File storage organization
+
+**User & Department Management:**
+- Department creation and assignment
+- Role-based access control
+- User-department relationships
+
+### Phase 3: Workflow System (Weeks 6-8)
+**Document Workflow:**
+- Checkout/checkin system with file locking
+- Version control and naming
+- Approval workflow implementation
+- Document status management
+
+**Notifications:**
+- Email system setup
+- Approval notifications
+- Status update notifications
+
+### Phase 4: Polish & Testing (Weeks 9-10)
+**UI/UX Improvements:**
+- Responsive design
+- Better error handling
+- Loading states and feedback
+
+**Testing & Security:**
+- Unit tests for critical functions
+- Integration testing
+- Security audit and improvements
+- Performance optimization
+
+### Phase 5: Deployment & Documentation (Weeks 11-12)
+**Deployment:**
+- Production build setup
+- Server deployment guide
+- Database setup scripts
+
+**Documentation:**
+- User manual
+- Admin setup guide
+- API documentation
+
+## Key Features Implementation
+
+### Document Checkout System
+```javascript
+// Prevent simultaneous editing
+const checkoutDocument = async (documentId, userId) => {
+  const doc = await Document.findById(documentId);
+  if (doc.is_checked_out) {
+    throw new Error('Document already checked out');
+  }
+  
+  await Document.update(documentId, {
+    is_checked_out: true,
+    checked_out_by: userId,
+    checked_out_at: new Date()
+  });
+  
+  // Copy file to temp checkout location
+  const tempPath = `/app/storage/temp/checkouts/${userId}_${documentId}`;
+  await copyFile(doc.file_path, tempPath);
+  
+  return tempPath;
+};
+```
+
+### Version Control System
+```javascript
+// Automatic version increment
+const createNewVersion = async (originalDocId, newFileData) => {
+  const originalDoc = await Document.findById(originalDocId);
+  const nextVersion = originalDoc.version_number + 1;
+  
+  const newFileName = `${originalDoc.original_name.split('.')[0]}-r${nextVersion}.${originalDoc.original_name.split('.')[1]}`;
+  
+  return await Document.create({
+    ...newFileData,
+    current_name: newFileName,
+    version_number: nextVersion,
+    parent_document_id: originalDocId
+  });
+};
+```
+
+### Email Notification System
+```javascript
+// Approval notification
+const sendApprovalNotification = async (approvalRequest) => {
+  const deptLeads = await User.findDepartmentLeads(approvalRequest.department_id);
+  
+  for (const lead of deptLeads) {
+    await emailService.send({
+      to: lead.email,
+      subject: 'Document Approval Required',
+      template: 'approval-request',
+      data: {
+        documentName: approvalRequest.document.original_name,
+        submittedBy: approvalRequest.submitted_by.full_name,
+        approvalUrl: `${process.env.APP_URL}/approvals/${approvalRequest.id}`
+      }
+    });
+  }
+};
+```
+
+## Security Considerations
+
+### Authentication & Authorization
+- JWT tokens with 24-hour expiration
+- Password requirements: minimum 8 characters, mixed case, numbers
+- Role-based access control at API level
+- Session timeout after 30 minutes of inactivity
+
+### File Security
+- File uploads limited to specific types
+- Virus scanning (recommend ClamAV integration)
+- File size limits per upload
+- Path traversal protection
+
+### Data Protection
+- SQL injection prevention via parameterized queries
+- Input validation and sanitization
+- HTTPS enforcement in production
+- Database connection encryption
+
+## Deployment Requirements
+
+### Server Specifications
+**Minimum Requirements:**
+- 4GB RAM
+- 2 CPU cores
+- 50GB storage (+ additional for document storage)
+- Linux/Windows Server
+
+**Recommended:**
+- 8GB RAM
+- 4 CPU cores
+- 100GB+ SSD storage
+- Regular backup system
+
+### Installation Scripts
+```bash
+# Database setup
+createdb maxtdocs
+psql maxtdocs < database/schema.sql
+psql maxtdocs < database/initial_data.sql
+
+# Application setup
+npm install
+npm run build
+npm run migrate
+npm start
+```
+
+## Monitoring & Maintenance
+
+### Health Checks
+- Database connectivity
+- File system permissions
+- Disk space monitoring
+- Application uptime
+
+### Backup Strategy
+- Daily database backups
+- Weekly full system backups
+- Document version retention policy
+- Disaster recovery procedures
+
+## Success Metrics
+
+### Technical Metrics
+- 99% uptime during business hours
+- < 3 second file upload/download times
+- Zero data loss incidents
+- < 1 second page load times
+
+### User Metrics
+- User adoption rate
+- Document processing time reduction
+- Error rate < 1%
+- User satisfaction score > 4/5
+
+## Future Enhancements (Post-MVP)
+
+### Version 2 Features
+- Advanced search and filtering
+- Document templates system
+- Integration with existing systems
+- Mobile application
+- Advanced reporting dashboard
+- OCR for scanned documents
+- Electronic signatures
+
+### Scaling Considerations
+- Multi-server deployment
+- Cloud storage integration
+- Advanced caching
+- API rate limiting
+- Microservices architecture
+
+
+This specification provides the foundation for building a robust, scalable document control system that meets your immediate needs while allowing for future growth.
